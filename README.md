@@ -1,4 +1,4 @@
-#mtdntg - Matrix to Telegram bridge.
+# mtdntg - Matrix to Telegram bridge.
 ## About
 This is the source code for the Telegram bot [@MastodonBridgeBot](https://t.me/MastodonBridgeBot). It allows you to redirect messages from Mastodon to Telegram with absolutely no restrictions. The bridge requires minimal information and is easy to use.
 ## Setting up
