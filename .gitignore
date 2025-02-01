@@ -1,3 +1,4 @@
 .env
 db.json
 db.json.lock
+__pycache__/

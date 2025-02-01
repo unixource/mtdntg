@@ -18,7 +18,7 @@ class database_:
     def __init__(self):
         self.db = pysondb.db.getDb("db.json")
     def write(self, some: dict) -> int:
-        if self.db.getBy(some) == []:
+        if self.db.getByQuery(some) == []:
             self.db.add(some)
             return 0
         return 1
@@ -132,7 +132,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 ## SENDING ##
 def html2md(text: str) -> str:
-    out = ""
     i = 0
     while i < len(text):
         toReplace = ""
@@ -141,20 +140,21 @@ def html2md(text: str) -> str:
             while i < len(text) and text[i] != ">":
                 toReplace += text[i]
                 i += 1
-            if i >= len(text):
-                out += toReplace
-            else:
-                tag = toReplace.split()[0]
+            if i < len(text):
+                tag = toReplace.split()[0][1:].replace("/", "")
+                toReplace += ">"
+                print(toReplace)
                 match tag:
-                    case "p":
-                        text.replace(toReplace, "")
-                        text.replace("</p>", "")
                     case "a":
-                        text.replace(toReplace, "*")
-                        text.replace("</a>", "*")
-        else: out += text[i]
-        i += 1
-    return out
+                        text = text.replace(toReplace, "*")
+                    case "br":
+                        text = text.replace(toReplace, "\n")
+                    case _:
+                        text = text.replace(toReplace, "")
+            i -= len(toReplace)-1
+        else:
+            i += 1
+    return text
 
 from time import sleep
 def sender():
@@ -164,7 +164,6 @@ def sender():
             users = db.get()
             for user in users:
                 sleep(1) ### based on Mastodon rate limit
-                Channel = user["tg_channel_id"]
                 Id = user["mastodon_id"]
                 Instance = user["mastodon_instance"]
                 User = user["mastodon_name"]+"_"+Instance
@@ -173,8 +172,8 @@ def sender():
                     post["id"] = int(post["id"])
                     if User in ids.keys() and post["id"] > ids[User]:
                         ids[User] = post["id"]
-                        postContent = post["content"]
-                        postContent += "\n\n"+post["url"]
+                        postContent = html2md(post["content"]+"\n\n"+post["url"])
+                        media = []
                         if len(post["media_attachments"]) > 0:
                             hasPhoto = False
                             for m in post["media_attachments"]:
@@ -185,14 +184,21 @@ def sender():
                                     media.append(InputMediaPhoto(m["url"]))
                                 else:
                                     media.append(InputMediaDocument(m["url"]))
-                            asyncio.run(application.bot.send_media_group(Channel, media, caption=html2md(postContent), parse_mode="Markdown"))
-                        else:
-                            asyncio.run(application.bot.send_message(Channel, html2md(postContent), parse_mode="Markdown"))
+                        for u in db.get({"tg_user_id": user["tg_user_id"]}):
+                            for _ in range(3):
+                                try:
+                                    if len(media) > 0:
+                                        asyncio.run(application.bot.send_media_group(u["tg_channel_id"], media, caption=postContent, parse_mode="Markdown"))
+                                        break
+                                    else:
+                                        asyncio.run(application.bot.send_message(u["tg_channel_id"], postContent, parse_mode="Markdown"))
+                                        break
+                                except: pass
                     elif not User in ids.keys():
                         ids[User] = post["id"]
         except Exception as e:
-            print(e)
-            sleep(1)
+           print(e)
+           sleep(1)
 
 ## MAIN ##
 from dotenv import load_dotenv
