@@ -149,12 +149,14 @@ def html2md(text: str) -> str:
                         text = text.replace(toReplace, "*")
                     case "br":
                         text = text.replace(toReplace, "\n")
+                    case "p":
+                        text = text.replace(toReplace, "\n")
                     case _:
                         text = text.replace(toReplace, "")
             i -= len(toReplace)-1
         else:
             i += 1
-    return text
+    return text.strip()
 
 from time import sleep
 def sender():

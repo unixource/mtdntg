@@ -2,3 +2,4 @@
 db.json
 db.json.lock
 __pycache__/
+venv
