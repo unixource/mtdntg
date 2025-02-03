@@ -16,13 +16,13 @@ bindings = {}
 ## UTILITIES ##
 class database_:
     def __init__(self):
-        self.db = pysondb.db.getDb("db.json")
+        self.db = pysondb.db.getDb("db/db.json")
     def write(self, some: dict) -> int:
         if self.db.getByQuery(some) == []:
             self.db.add(some)
             return 0
         return 1
-    def get(self, some: dict = {}) -> list: 
+    def get(self, some: dict = {}) -> list:
         if some == {}: return self.db.getAll()
         return self.db.getByQuery(some)
     def delete(self, some: dict) -> None:
@@ -66,13 +66,13 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "mastodon_id": requests.get(f"https://{instance}/api/v1/accounts/lookup?acct={username}", verify=False).json()["id"],
                 "mastodon_name": username,
                 "mastodon_instance": instance,
-                }) 
+                })
             if output == 1: #  output = 1 - already in db
                             #  output = 2-infinity - new in db | mastodon id
                 await update.message.reply_text("Already bridged!")
             else:
                 await update.message.reply_text(
-                    f"*Successfully bridged!*\n_FROM:_ {update.message.text}\n_TO:_ {channel.title}", 
+                    f"*Successfully bridged!*\n_FROM:_ {update.message.text}\n_TO:_ {channel.title}",
                     parse_mode="Markdown")
 
 ## MANAGING ##
@@ -98,7 +98,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             bindings[update.effective_sender.id] = None
 
         case "manage":
-            query = db.get({"tg_channel_id": int(args[0])}) 
+            query = db.get({"tg_channel_id": int(args[0])})
             reply_markup = []
             for element in query:
                 reply_markup.append( (element["mastodon_name"], f"manage_bridge {args[0]} {element['mastodon_id']}") )
@@ -115,7 +115,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             query = db.get({"tg_channel_id": int(args[0]), "mastodon_id": args[1]})[0]
             await update.effective_chat.send_message(f"Actions for bridge {query['mastodon_name']} -> {query['tg_channel_name']}",
                                                      reply_markup=inlineGen(reply_markup))
-        
+
         case "del_channel": db.delete({"tg_channel_id": int(args[0])})
         case "del_bridge": db.delete({"tg_channel_id": int(args[0]), "mastodon_id": args[1]})
         case "add_channel": await update.effective_chat.send_message("Use the /bind command in a group or channel.")
@@ -123,7 +123,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         case "add":
             query = db.get({"tg_channel_id": int(args[0])})[0]
             await join(update, context, Chat(query["tg_channel_id"], query["tg_channel_name"]))
-        
+
         case _:
             await update.effective_chat.send_message("WHAT")
 
@@ -149,12 +149,14 @@ def html2md(text: str) -> str:
                         text = text.replace(toReplace, "*")
                     case "br":
                         text = text.replace(toReplace, "\n")
+                    case "p":
+                        text = text.replace(toReplace, "\n")
                     case _:
                         text = text.replace(toReplace, "")
             i -= len(toReplace)-1
         else:
             i += 1
-    return text
+    return text.strip()
 
 from time import sleep
 def sender():
@@ -210,11 +212,11 @@ async def bridge(update: Update, context: ContextTypes.DEFAULT_TYPE, chat=None):
     if chat != None:
         bindings[update.effective_sender.id] = chat
         update.effective_chat.title = chat.title
-    else: 
+    else:
         bindings[update.effective_sender.id] = update.effective_chat
         if update.effective_chat.type == "private": return
     await update.effective_sender.send_message(
-            f"Bridging with *{update.effective_chat.title}*\nSend me a link to your Mastodon profile.", 
+            f"Bridging with *{update.effective_chat.title}*\nSend me a link to your Mastodon profile.",
             parse_mode="Markdown",
             reply_markup=inlineGen([("Cancel", "cancel")])
     )
@@ -248,7 +250,7 @@ if __name__ == '__main__':
     application.add_handler( ChatMemberHandler(bridge) )
     application.add_handler( MessageHandler(filters.TEXT, callback=message) )
     application.add_handler( CallbackQueryHandler(button) )
-    
+
     application.run_polling()
 
     #-#-#-#-#-#-#-#

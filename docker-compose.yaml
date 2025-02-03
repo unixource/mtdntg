@@ -1,0 +1,18 @@
+x-defaults: &defaults
+  restart: always
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  mtdntg:
+    <<: *defaults
+    build: .
+    image: mtdntg:latest
+    container_name: mtdntg
+    environment:
+      - TOKEN=YourTelegramToken
+    volumes:
+      - ./db:/app/db
