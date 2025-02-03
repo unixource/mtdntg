@@ -9,7 +9,7 @@ cd mtdntg
 python -m venv env
 source env/bin/activate
 pip install -r requirements.txt
-pysondb create db.json
+pysondb create db/db.json
 ```
 After that, create an .env file with the contents:
 ```
