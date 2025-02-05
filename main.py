@@ -131,6 +131,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.effective_chat.send_message("Deleted.")
 
 ## SENDING ##
+import html
 def html2md(text: str) -> str:
     i = 0
     while i < len(text):
@@ -156,7 +157,7 @@ def html2md(text: str) -> str:
             i -= len(toReplace)-1
         else:
             i += 1
-    return text.strip()
+    return html.unescape(text.strip())
 
 from time import sleep
 def sender():
