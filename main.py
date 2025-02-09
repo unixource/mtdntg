@@ -291,7 +291,6 @@ Welcome to *Mastodon ➔ Telegram bridge* \\[mtdntg] 🐘
 _To start using it, add me to one of your chat rooms and give me the ability to send messages if needed._
 
 /start or /help - show this message
-/bind - link with chat \\[only in groups/channels]
 /manage - manage bridges
 
 Also, I'm a completely open-source bot under GPLv3 license :3
@@ -312,7 +311,6 @@ if __name__ == '__main__':
     application.add_handler( CommandHandler('start', start) )
     application.add_handler( CommandHandler('help', start) )
     application.add_handler( CommandHandler('manage', manage))
-    application.add_handler( CommandHandler('bind', bridge))
     application.add_handler( ChatMemberHandler(bridge) )
     application.add_handler( MessageHandler(filters.TEXT, callback=message) )
     application.add_handler( CallbackQueryHandler(button) )
