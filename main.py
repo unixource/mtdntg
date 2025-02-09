@@ -166,6 +166,7 @@ def html2md(text: str) -> str:
     while i < len(text):
         toReplace = ""
         tag = ""
+        text = escape_markdown(text)
         if text[i] == "<":
             while i < len(text) and text[i] != ">":
                 toReplace += text[i]
@@ -186,7 +187,7 @@ def html2md(text: str) -> str:
             i -= len(toReplace)-1
         else:
             i += 1
-    return escape_markdown(html.unescape(text.strip()))
+    return html.unescape(text.strip())
 
 from time import sleep
 def sender():
