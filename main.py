@@ -163,10 +163,10 @@ from telegram.helpers import escape_markdown
 import html
 def html2md(text: str) -> str:
     i = 0
+    ignoreSymbols = "*"
     while i < len(text):
         toReplace = ""
         tag = ""
-        text = escape_markdown(text)
         if text[i] == "<":
             while i < len(text) and text[i] != ">":
                 toReplace += text[i]
@@ -174,7 +174,6 @@ def html2md(text: str) -> str:
             if i < len(text):
                 tag = toReplace.split()[0][1:].replace("/", "")
                 toReplace += ">"
-                print(toReplace)
                 match tag:
                     case "a":
                         text = text.replace(toReplace, "*")
@@ -187,7 +186,12 @@ def html2md(text: str) -> str:
             i -= len(toReplace)-1
         else:
             i += 1
-    return html.unescape(text.strip())
+    text_ = ""
+    for i, symb in enumerate(html.unescape(text.strip())):
+        if not symb in ignoreSymbols:
+            symb = escape_markdown(symb)
+        text_ += symb
+    return text_
 
 from time import sleep
 def sender():
