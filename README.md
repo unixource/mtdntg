@@ -10,10 +10,12 @@ python -m venv env
 source env/bin/activate
 pip install -r requirements.txt
 pysondb create db/db.json
+pysondb create db/channels.json
 ```
 After that, create an .env file with the contents:
 ```
 TOKEN="YOUR_TELEGRAM_BOT_TOKEN"
+VERSION="BOT_VERSION" #optional
 ```
 Done :D
 Now you can run the main script
