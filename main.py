@@ -1,4 +1,4 @@
-import asyncio, requests, logging, pysondb
+import asyncio, requests, logging, pysondb, re
 from telegram import InputMediaDocument, InputMediaPhoto
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import LinkPreviewOptions, Update, error
@@ -9,10 +9,27 @@ from urllib.parse import urlparse
 import urllib3
 urllib3.disable_warnings()
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+class TokenFilterHandler(logging.StreamHandler):
+    def emit(self, record):
+        token_pattern = re.compile(r'bot\d+:[A-Za-z0-9_-]+')
+        if token_pattern.search(record.getMessage()):
+            record.msg = token_pattern.sub('bot******', record.getMessage())
+            record.args = ()  # Очищаем аргументы, если они есть
+        super().emit(record)  # Передаем запись дальше
+
+
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+# Удаляем все стандартные обработчики, если они есть
+for handler in root_logger.handlers[:]:
+    root_logger.removeHandler(handler)
+
+# Добавляем кастомный обработчик
+token_handler = TokenFilterHandler()
+token_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+root_logger.addHandler(token_handler)
+
 
 bindings = {}
 
@@ -141,7 +158,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.effective_chat.send_message(f"Actions for bridge {query['mastodon_name']} ➔ {query['tg_channel_name']}",
                                                      reply_markup=inlineGen(reply_markup))
 
-        case "del_channel": 
+        case "del_channel":
             db.delete({"tg_channel_id": int(args[0])})
             channels.delete({"channel_id": int(args[0])})
             await application.bot.leave_chat(int(args[0]))
@@ -239,7 +256,7 @@ def sender():
                                         break
                                 except Exception as e:
                                     logging.error(e)
-                                    if type(e) == error.NetworkError and "Event loop is closed" in e.message: 
+                                    if type(e) == error.NetworkError and "Event loop is closed" in e.message:
                                         logging.warning(e)
                                         break
                                     logging.warning("Retrying...")
@@ -257,7 +274,7 @@ application = ApplicationBuilder().token(getenv("TOKEN")).build()
 
 async def bridge(update: Update, context: ContextTypes.DEFAULT_TYPE, chat=None):
     title = "unknown"
-    
+
     if chat != None:
         bindings[update.effective_sender.id] = chat
         title = chat.title
@@ -266,7 +283,7 @@ async def bridge(update: Update, context: ContextTypes.DEFAULT_TYPE, chat=None):
 
         bindings[update.effective_sender.id] = update.effective_chat
         if update.effective_chat.type == "private": return
-        
+
         result = extract_status_change(update.my_chat_member)
         if result is None:
             return
